@@ -19,9 +19,14 @@ import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import z from "zod";
 
 export default function SignUpPage() {
+  const router = useRouter();
+  const [error, setError] = useState("");
+  
   const form = useForm({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
@@ -32,11 +37,25 @@ export default function SignUpPage() {
   });
 
   async function onSubmit(data: z.infer<typeof signUpSchema>) {
-    await authClient.signUp.email({
-      email: data.email,
-      name: data.username,
-      password: data.password,
-    });
+    try {
+      setError("");
+      const result = await authClient.signUp.email({
+        email: data.email,
+        name: data.username,
+        password: data.password,
+      });
+
+      if (result.error) {
+        setError(result.error.message || "Sign up failed");
+        return;
+      }
+
+      // Success - redirect to home
+      router.push("/");
+    } catch (err: any) {
+      setError(err.message || "Sign up failed");
+      console.error("Sign up error:", err);
+    }
   }
 
   return (
@@ -46,6 +65,12 @@ export default function SignUpPage() {
         <CardDescription>Create an account to get started</CardDescription>
       </CardHeader>
       <CardContent>
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-md text-sm">
+            {error}
+          </div>
+        )}
+        
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <FieldGroup className="gap-y-4">
             <Controller
@@ -103,7 +128,12 @@ export default function SignUpPage() {
               )}
             />
 
-            <Button type="submit">Signup</Button>
+            <Button 
+              type="submit" 
+              disabled={form.formState.isSubmitting}
+            >
+              {form.formState.isSubmitting ? "Signing up..." : "Sign up"}
+            </Button>
           </FieldGroup>
         </form>
       </CardContent>
