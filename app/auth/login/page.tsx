@@ -18,20 +18,19 @@ import {
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
-import { useState } from "react";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
+import { useTransition } from "react";
 
-
-// import authClient from wherever it is defined
+type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const router = useRouter();
-  const [error, setError] = useState("");
+  const [isPending, startTransition] = useTransition();
 
-  const form = useForm<z.infer<typeof loginSchema>>({
+  const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       email: "",
@@ -39,57 +38,64 @@ export default function LoginPage() {
     },
   });
 
-  async function onSubmit(data: z.infer<typeof loginSchema>) {
-  try {
-    const result = await authClient.signIn.email({
-      email: data.email,
-      password: data.password,
+  function onSubmit(data: LoginFormData) {
+    startTransition(async () => {
+      try {
+        await authClient.signIn.email(
+          {
+            email: data.email,
+            password: data.password,
+          },
+          {
+            fetchOptions: {
+              onSuccess: () => {
+                toast.success("Logged in successfully");
+                router.push("/");
+              },
+              onError: (error) => {
+                const errorMessage = error?.error?.message || "Login failed. Please try again.";
+                toast.error(errorMessage);
+              },
+            },
+          }
+        );
+      } catch (error) {
+        toast.error("An unexpected error occurred");
+      }
     });
-
-    if (result?.error) {
-      toast.error(result.error.message || "Login failed");
-      return;
-    }
-
-    toast.success("Logged in successfully");
-    router.push("/");
-  } catch (err: any) {
-    toast.error(err.message || "Login failed");
   }
-}
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Login</CardTitle>
-        <CardDescription>
-          Login to your account
-        </CardDescription>
-      </CardHeader>
-
-      <CardContent>
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-md text-sm">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <FieldGroup className="gap-y-4">
+    <div className="flex min-h-screen items-center justify-center p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle>Login</CardTitle>
+          <CardDescription>Login to your account</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <Controller
               name="email"
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field>
-                  <FieldLabel>Email</FieldLabel>
-                  <Input
-                    type="email"
-                    placeholder="your@gmail.com"
-                    aria-invalid={fieldState.invalid}
-                    {...field}
-                  />
+                  <FieldLabel htmlFor="email">Email</FieldLabel>
+                  <FieldGroup>
+                    <Input
+                      {...field}
+                      id="email"
+                      type="email"
+                      placeholder="Enter your email"
+                      autoComplete="email"
+                      disabled={isPending}
+                      aria-invalid={!!fieldState.error}
+                      aria-describedby={fieldState.error ? "email-error" : undefined}
+                    />
+                  </FieldGroup>
                   {fieldState.error && (
-                    <FieldError errors={[fieldState.error]} />
+                    <FieldError id="email-error">
+                      {fieldState.error.message}
+                    </FieldError>
                   )}
                 </Field>
               )}
@@ -100,15 +106,23 @@ export default function LoginPage() {
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field>
-                  <FieldLabel>Password</FieldLabel>
-                  <Input
-                    type="password"
-                    placeholder="******"
-                    aria-invalid={fieldState.invalid}
-                    {...field}
-                  />
+                  <FieldLabel htmlFor="password">Password</FieldLabel>
+                  <FieldGroup>
+                    <Input
+                      {...field}
+                      id="password"
+                      type="password"
+                      placeholder="Enter your password"
+                      autoComplete="current-password"
+                      disabled={isPending}
+                      aria-invalid={!!fieldState.error}
+                      aria-describedby={fieldState.error ? "password-error" : undefined}
+                    />
+                  </FieldGroup>
                   {fieldState.error && (
-                    <FieldError errors={[fieldState.error]} />
+                    <FieldError id="password-error">
+                      {fieldState.error.message}
+                    </FieldError>
                   )}
                 </Field>
               )}
@@ -116,15 +130,14 @@ export default function LoginPage() {
 
             <Button
               type="submit"
-              disabled={form.formState.isSubmitting}
+              className="w-full"
+              disabled={isPending}
             >
-              {form.formState.isSubmitting
-                ? "Logging in..."
-                : "Login"}
+              {isPending ? "Logging in..." : "Login"}
             </Button>
-          </FieldGroup>
-        </form>
-      </CardContent>
-    </Card>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

@@ -20,14 +20,17 @@ import { authClient } from "@/lib/auth-client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import z from "zod";
+import { useTransition } from "react";
+import { toast } from "sonner";
+import { z } from "zod";
+
+type SignUpFormData = z.infer<typeof signUpSchema>;
 
 export default function SignUpPage() {
   const router = useRouter();
-  const [error, setError] = useState("");
-  
-  const form = useForm({
+  const [isPending, startTransition] = useTransition();
+
+  const form = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
       email: "",
@@ -36,74 +39,87 @@ export default function SignUpPage() {
     },
   });
 
-  async function onSubmit(data: z.infer<typeof signUpSchema>) {
-    try {
-      setError("");
-      const result = await authClient.signUp.email({
-        email: data.email,
-        name: data.username,
-        password: data.password,
-      });
+  function onSubmit(data: SignUpFormData) {
+    startTransition(async () => {
+      try {
+        const result = await authClient.signUp.email({
+          email: data.email,
+          name: data.username,
+          password: data.password,
+        });
 
-      if (result.error) {
-        setError(result.error.message || "Sign up failed");
-        return;
+        if (result.error) {
+          toast.error(result.error.message || "Sign up failed. Please try again.");
+          return;
+        }
+
+        toast.success("Account created successfully!");
+        router.push("/");
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred";
+        toast.error(errorMessage);
       }
-
-      // Success - redirect to home
-      router.push("/");
-    } catch (err: any) {
-      setError(err.message || "Sign up failed");
-      console.error("Sign up error:", err);
-    }
+    });
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Sign up</CardTitle>
-        <CardDescription>Create an account to get started</CardDescription>
-      </CardHeader>
-      <CardContent>
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-md text-sm">
-            {error}
-          </div>
-        )}
-        
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <FieldGroup className="gap-y-4">
+    <div className="flex min-h-screen items-center justify-center p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle>Sign up</CardTitle>
+          <CardDescription>Create an account to get started</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <Controller
               name="username"
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field>
-                  <FieldLabel>Full Name</FieldLabel>
-                  <Input
-                    aria-invalid={fieldState.invalid}
-                    placeholder="Rahul Raj Khadka"
-                    {...field}
-                  />
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
+                  <FieldLabel htmlFor="username">Full Name</FieldLabel>
+                  <FieldGroup>
+                    <Input
+                      {...field}
+                      id="username"
+                      type="text"
+                      placeholder="Rahul Raj Khadka"
+                      autoComplete="name"
+                      disabled={isPending}
+                      aria-invalid={!!fieldState.error}
+                      aria-describedby={fieldState.error ? "username-error" : undefined}
+                    />
+                  </FieldGroup>
+                  {fieldState.error && (
+                    <FieldError id="username-error">
+                      {fieldState.error.message}
+                    </FieldError>
                   )}
                 </Field>
               )}
             />
+
             <Controller
               name="email"
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field>
-                  <FieldLabel>Email</FieldLabel>
-                  <Input
-                    aria-invalid={fieldState.invalid}
-                    placeholder="your@gmail.com"
-                    type="email"
-                    {...field}
-                  />
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
+                  <FieldLabel htmlFor="email">Email</FieldLabel>
+                  <FieldGroup>
+                    <Input
+                      {...field}
+                      id="email"
+                      type="email"
+                      placeholder="your@gmail.com"
+                      autoComplete="email"
+                      disabled={isPending}
+                      aria-invalid={!!fieldState.error}
+                      aria-describedby={fieldState.error ? "email-error" : undefined}
+                    />
+                  </FieldGroup>
+                  {fieldState.error && (
+                    <FieldError id="email-error">
+                      {fieldState.error.message}
+                    </FieldError>
                   )}
                 </Field>
               )}
@@ -114,29 +130,38 @@ export default function SignUpPage() {
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field>
-                  <FieldLabel>Password</FieldLabel>
-                  <Input
-                    aria-invalid={fieldState.invalid}
-                    placeholder="*****"
-                    type="password"
-                    {...field}
-                  />
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
+                  <FieldLabel htmlFor="password">Password</FieldLabel>
+                  <FieldGroup>
+                    <Input
+                      {...field}
+                      id="password"
+                      type="password"
+                      placeholder="Create a strong password"
+                      autoComplete="new-password"
+                      disabled={isPending}
+                      aria-invalid={!!fieldState.error}
+                      aria-describedby={fieldState.error ? "password-error" : undefined}
+                    />
+                  </FieldGroup>
+                  {fieldState.error && (
+                    <FieldError id="password-error">
+                      {fieldState.error.message}
+                    </FieldError>
                   )}
                 </Field>
               )}
             />
 
-            <Button 
-              type="submit" 
-              disabled={form.formState.isSubmitting}
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={isPending}
             >
-              {form.formState.isSubmitting ? "Signing up..." : "Sign up"}
+              {isPending ? "Creating account..." : "Sign up"}
             </Button>
-          </FieldGroup>
-        </form>
-      </CardContent>
-    </Card>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
