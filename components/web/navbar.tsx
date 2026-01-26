@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
 const Navbar = () => {
-  const { isAuthenticated, isLoading } = useConvexAuth();
+
   const router = useRouter();
 
   const handleLogout = async () => {
@@ -50,28 +50,7 @@ const Navbar = () => {
         <div className="flex items-center space-x-2">
           <ModeToggle />
 
-          {!isLoading && (
-            isAuthenticated ? (
-              <Button size="sm" onClick={handleLogout}>
-                Logout
-              </Button>
-            ) : (
-              <>
-                <Link
-                  href="/auth/sign-up"
-                  className={buttonVariants({ variant: "ghost", size: "sm" })}
-                >
-                  Sign Up
-                </Link>
-                <Link
-                  href="/auth/login"
-                  className={buttonVariants({ variant: "default", size: "sm" })}
-                >
-                  Login
-                </Link>
-              </>
-            )
-          )}
+         
         </div>
       </div>
     </nav>

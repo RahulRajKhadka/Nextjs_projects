@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { mutation } from "@/convex/_generated/server";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { Loader2 } from "lucide-react";
@@ -29,14 +30,19 @@ import z from "zod";
 export default function CreateRoute() {
   const [isPending, startTransition] = useTransition();
 
+
+
+
   const form = useForm({
     resolver: zodResolver(postSchema),
     defaultValues: {
       content: "",
       title: "",
-      image: undefined,
+    
     },
   });
+
+
 
   function onSubmit(values: z.infer<typeof postSchema>) {
     startTransition(async () => {
