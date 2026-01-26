@@ -1,56 +1,43 @@
-"use client";
+"use client"
 
-
-import { postSchema } from "../../Schemas/blog";
+import { postSchema } from "@/app/Schemas/blog";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { mutation } from "@/convex/_generated/server";
+import { api } from "@/convex/_generated/api";
 import { zodResolver } from "@hookform/resolvers/zod";
-
-import { Loader2 } from "lucide-react";
-
-import { useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
-import z from "zod";
+import z from "zod"
+import { useMutation } from "convex/react"
+import { useReducer, useTransition } from "react";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import { createBlogAction } from "@/app/action";
+
 
 export default function CreateRoute() {
   const [isPending, startTransition] = useTransition();
-
-
-
-
+  const router =useRouter();
+  const createPost = useMutation(api.posts.createPost);
+ 
   const form = useForm({
     resolver: zodResolver(postSchema),
     defaultValues: {
       content: "",
       title: "",
-    
     },
   });
 
-
-
   function onSubmit(values: z.infer<typeof postSchema>) {
     startTransition(async () => {
-      console.log("hey this runs on the client side");
 
-     
+     console.log("hey this runs on the client side");
+     await createBlogAction(values);
     });
   }
+
   return (
     <div className="py-12">
       <div className="text-center mb-12">
@@ -58,7 +45,7 @@ export default function CreateRoute() {
           Create Post
         </h1>
         <p className="text-xl text-muted-foreground pt-4">
-          Share your thoughts with the big world
+          Share your thought with the big world
         </p>
       </div>
 
@@ -67,77 +54,65 @@ export default function CreateRoute() {
           <CardTitle>Create Blog Article</CardTitle>
           <CardDescription>Create a new blog article</CardDescription>
         </CardHeader>
+
         <CardContent>
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <FieldGroup className="gap-y-4">
+              {/* Title Field */}
               <Controller
                 name="title"
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field>
-                    <FieldLabel>Title</FieldLabel>
-                    <Input
-                      aria-invalid={fieldState.invalid}
-                      placeholder="super cool title"
-                      {...field}
-                    />
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
+                    <FieldLabel htmlFor="title">Title</FieldLabel>
+                    <FieldGroup>
+                      <Input
+                        {...field}
+                        id="title"
+                        type="text"
+                        placeholder="Super Cool title"
+                        disabled={isPending}
+                        aria-invalid={!!fieldState.error}
+                        aria-describedby={fieldState.error ? "title-error" : undefined}
+                      />
+                    </FieldGroup>
+                    {fieldState.error && (
+                      <FieldError id="title-error">
+                        {fieldState.error.message}
+                      </FieldError>
                     )}
                   </Field>
                 )}
               />
 
+              {/* Content Field */}
               <Controller
                 name="content"
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field>
-                    <FieldLabel>Content</FieldLabel>
-                    <Textarea
-                      aria-invalid={fieldState.invalid}
-                      placeholder="Super cool blog content"
-                      {...field}
-                    />
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
+                    <FieldLabel htmlFor="content">Content</FieldLabel>
+                    <FieldGroup>
+                      <Textarea
+                        {...field}
+                        id="content"
+                        placeholder="Super Cool blog content"
+                        disabled={isPending}
+                        aria-invalid={!!fieldState.error}
+                        aria-describedby={fieldState.error ? "content-error" : undefined}
+                      />
+                    </FieldGroup>
+                    {fieldState.error && (
+                      <FieldError id="content-error">
+                        {fieldState.error.message}
+                      </FieldError>
                     )}
                   </Field>
                 )}
               />
 
-              <Controller
-                name="image"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field>
-                    <FieldLabel>Image</FieldLabel>
-                    <Input
-                      aria-invalid={fieldState.invalid}
-                      placeholder="Super cool blog content"
-                      type="file"
-                      accept="image/*"
-                      onChange={(event) => {
-                        const file = event.target.files?.[0];
-                        field.onChange(file);
-                      }}
-                    />
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
-                )}
-              />
-
-              <Button disabled={isPending}>
-                {isPending ? (
-                  <>
-                    <Loader2 className="size-4 animate-spin" />
-                    <span>Loading...</span>
-                  </>
-                ) : (
-                  <span>Create Post</span>
-                )}
+              <Button type="submit" disabled={isPending}>
+                {isPending ? "Creating..." : "Create Post"}
               </Button>
             </FieldGroup>
           </form>
