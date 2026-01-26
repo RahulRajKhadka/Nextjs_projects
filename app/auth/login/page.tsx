@@ -41,26 +41,26 @@ export default function LoginPage() {
   function onSubmit(data: LoginFormData) {
     startTransition(async () => {
       try {
-        await authClient.signIn.email(
-          {
-            email: data.email,
-            password: data.password,
-          },
-          {
-            fetchOptions: {
-              onSuccess: () => {
-                toast.success("Logged in successfully");
-                router.push("/");
-              },
-              onError: (error) => {
-                const errorMessage = error?.error?.message || "Login failed. Please try again.";
-                toast.error(errorMessage);
-              },
-            },
-          }
-        );
+        const result = await authClient.signIn.email({
+          email: data.email,
+          password: data.password,
+        });
+
+        // Check for errors
+        if (result.error) {
+          console.error("Login error:", result.error);
+          toast.error(result.error.message || "Login failed. Please try again.");
+          return;
+        }
+
+        // Success
+        console.log("Login successful:", result.data);
+        toast.success("Logged in successfully");
+        router.push("/");
       } catch (error) {
-        toast.error("An unexpected error occurred");
+        console.error("Login exception:", error);
+        const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred";
+        toast.error(errorMessage);
       }
     });
   }
@@ -85,7 +85,7 @@ export default function LoginPage() {
                       {...field}
                       id="email"
                       type="email"
-                      placeholder="Enter your email"
+                      placeholder="your@gmail.com"
                       autoComplete="email"
                       disabled={isPending}
                       aria-invalid={!!fieldState.error}
@@ -128,11 +128,7 @@ export default function LoginPage() {
               )}
             />
 
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={isPending}
-            >
+            <Button type="submit" className="w-full" disabled={isPending}>
               {isPending ? "Logging in..." : "Login"}
             </Button>
           </form>
