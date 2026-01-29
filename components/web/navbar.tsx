@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useConvexAuth } from "convex/react";
 import { Button, buttonVariants } from "../ui/button";
@@ -12,6 +12,12 @@ import { useRouter } from "next/navigation";
 const Navbar = () => {
   const { isAuthenticated, isLoading } = useConvexAuth();
   const router = useRouter();
+
+  // ✅ Delay rendering until client mount to prevent hydration errors
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleLogout = async () => {
     await authClient.signOut({
@@ -26,6 +32,9 @@ const Navbar = () => {
       },
     });
   };
+
+  // Don't render anything until client has mounted
+  if (!mounted) return null;
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
