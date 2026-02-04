@@ -27,6 +27,7 @@ export default function CreateRoute() {
     defaultValues: {
       content: "",
       title: "",
+      image:undefined
     },
   });
 
@@ -110,6 +111,39 @@ export default function CreateRoute() {
                   </Field>
                 )}
               />
+               <Controller
+                name="image"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field>
+                    <FieldLabel htmlFor="content">Content</FieldLabel>
+                    <FieldGroup>
+                      <Input
+                      
+                        id="images"
+                        placeholder="Upload your images here"
+                        disabled={isPending}
+                        aria-invalid={!!fieldState.error}
+                        aria-describedby={fieldState.error ? "content-error" : undefined}
+                        type="file"
+                        accept="image/*"
+                        onChange={(event)=>{
+                          const file=event.target.files?.[0];
+                          field.onChange(file)
+                          
+                          
+                        }}
+                      />
+                    </FieldGroup>
+                    {fieldState.error && (
+                      <FieldError id="content-error">
+                        {fieldState.error.message}
+                      </FieldError>
+                    )}
+                  </Field>
+                )}
+              />
+
 
               <Button type="submit" disabled={isPending}>
                 {isPending ? "Creating..." : "Create Post"}

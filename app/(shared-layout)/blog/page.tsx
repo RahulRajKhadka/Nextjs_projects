@@ -17,7 +17,7 @@ export default function BlogPage() {
           Our Blog
         </h1>
         <p className="pt-4 max-w-2xl mx-auto text-xl text-muted-foreground">
-          Insights, thouts, and trnds from our team.
+          Insights, thoughts, and trends from our team.
         </p>
       </div>
       <Suspense
