@@ -9,6 +9,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
 
+export const dynamic="force-static"
+export const revalidate=30;
+
 export default function BlogPage() {
   return (
     <div className="py-12">
@@ -20,14 +23,9 @@ export default function BlogPage() {
           Insights, thoughts, and trends from our team.
         </p>
       </div>
-      <Suspense
-  fallback={<SkeletonLaodingUi/>
-    
-  }
->
-  <LoadBlogList />
-</Suspense>
-
+      <Suspense fallback={<SkeletonLaodingUi />}>
+        <LoadBlogList />
+      </Suspense>
     </div>
   );
 }
@@ -43,7 +41,10 @@ async function LoadBlogList() {
         <Card key={post._id} className="pt-0">
           <div className=" relative h-48 w-full overflow-hidden">
             <Image
-              src="https://media.istockphoto.com/id/485371557/photo/twilight-at-spirit-island.jpg?s=612x612&w=0&k=20&c=FSGliJ4EKFP70Yjpzso0HfRR4WwflC6GKfl4F3Hj7fk="
+              src={
+                post.imageUrl ??
+                " https://static.vecteezy.com/system/resources/previews/050/686/446/non_2x/rocky-mountains-usacanada-is-the-beautiful-background-free-photo.jpg"
+              }
               alt="Image"
               fill
               className="rounded-t-lg"
@@ -69,25 +70,21 @@ async function LoadBlogList() {
   );
 }
 
-function SkeletonLaodingUi(){
-
-    return (
-
-<div className="grid gap-6 md:grid-cols-3 lg:grid-cols-3">
+function SkeletonLaodingUi() {
+  return (
+    <div className="grid gap-6 md:grid-cols-3 lg:grid-cols-3">
       {[...Array(3)].map((_, i) => (
         <div key={i} className="flex flex-col space-y-3">
-       <Skeleton className="h-48 w-full rounded-2xl"/>
-       <div className="spce-y-2 flex flex-col">
+          <Skeleton className="h-48 w-full rounded-2xl" />
+          <div className="spce-y-2 flex flex-col">
+            <Skeleton className="h-6 w-3/4" />
 
-        <Skeleton className="h-6 w-3/4"/>
-        
-        <Skeleton className="h-6 w-full"/>
-        
-        <Skeleton className="h-6 w-2/3"/>
-       
-       </div>
+            <Skeleton className="h-6 w-full" />
+
+            <Skeleton className="h-6 w-2/3" />
+          </div>
         </div>
       ))}
     </div>
-    )
+  );
 }

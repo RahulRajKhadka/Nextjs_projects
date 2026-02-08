@@ -6,36 +6,38 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { api } from "@/convex/_generated/api";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import z from "zod"
-import { useMutation } from "convex/react"
-import { useReducer, useTransition } from "react";
-import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useTransition } from "react";
 import { createBlogAction } from "@/app/action";
-
 
 export default function CreateRoute() {
   const [isPending, startTransition] = useTransition();
-  const router =useRouter();
-  const createPost = useMutation(api.posts.createPost);
  
   const form = useForm({
     resolver: zodResolver(postSchema),
     defaultValues: {
       content: "",
       title: "",
-      image:undefined
+      image: undefined
     },
   });
 
   function onSubmit(values: z.infer<typeof postSchema>) {
     startTransition(async () => {
-
-     console.log("hey this runs on the client side");
-     await createBlogAction(values);
+      console.log("Submitting values:", values);
+      
+      const result = await createBlogAction(values);
+      
+      if (result?.error) {
+        console.error("Error:", result.error);
+        // You can show a toast here
+        // toast.error(result.error);
+      } else {
+        console.log("Post created successfully!");
+        // toast.success("Post created successfully!");
+      }
     });
   }
 
@@ -111,39 +113,38 @@ export default function CreateRoute() {
                   </Field>
                 )}
               />
-               <Controller
+
+              {/* Image Field */}
+              <Controller
                 name="image"
                 control={form.control}
-                render={({ field, fieldState }) => (
+                render={({ field: { value, onChange, ...field }, fieldState }) => (
                   <Field>
-                    <FieldLabel htmlFor="content">Content</FieldLabel>
+                    <FieldLabel htmlFor="image">Image (Optional)</FieldLabel>
                     <FieldGroup>
                       <Input
-                      
-                        id="images"
-                        placeholder="Upload your images here"
+                        {...field}
+                        id="image"
+                        placeholder="Upload your image here"
                         disabled={isPending}
                         aria-invalid={!!fieldState.error}
-                        aria-describedby={fieldState.error ? "content-error" : undefined}
+                        aria-describedby={fieldState.error ? "image-error" : undefined}
                         type="file"
                         accept="image/*"
-                        onChange={(event)=>{
-                          const file=event.target.files?.[0];
-                          field.onChange(file)
-                          
-                          
+                        onChange={(event) => {
+                          const file = event.target.files?.[0];
+                          onChange(file);
                         }}
                       />
                     </FieldGroup>
                     {fieldState.error && (
-                      <FieldError id="content-error">
+                      <FieldError id="image-error">
                         {fieldState.error.message}
                       </FieldError>
                     )}
                   </Field>
                 )}
               />
-
 
               <Button type="submit" disabled={isPending}>
                 {isPending ? "Creating..." : "Create Post"}

@@ -22,13 +22,18 @@ import { z } from "zod";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
+import { Eye, EyeOff } from "lucide-react";
+
+
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [showPassword, setShowPassword] = useState(false);
+
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -49,7 +54,9 @@ export default function LoginPage() {
         // Check for errors
         if (result.error) {
           console.error("Login error:", result.error);
-          toast.error(result.error.message || "Login failed. Please try again.");
+          toast.error(
+            result.error.message || "Login failed. Please try again.",
+          );
           return;
         }
 
@@ -59,7 +66,10 @@ export default function LoginPage() {
         router.push("/");
       } catch (error) {
         console.error("Login exception:", error);
-        const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred";
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred";
         toast.error(errorMessage);
       }
     });
@@ -89,7 +99,9 @@ export default function LoginPage() {
                       autoComplete="email"
                       disabled={isPending}
                       aria-invalid={!!fieldState.error}
-                      aria-describedby={fieldState.error ? "email-error" : undefined}
+                      aria-describedby={
+                        fieldState.error ? "email-error" : undefined
+                      }
                     />
                   </FieldGroup>
                   {fieldState.error && (
@@ -107,18 +119,30 @@ export default function LoginPage() {
               render={({ field, fieldState }) => (
                 <Field>
                   <FieldLabel htmlFor="password">Password</FieldLabel>
-                  <FieldGroup>
+                  <FieldGroup className="relative">
                     <Input
                       {...field}
                       id="password"
-                      type="password"
+                      type={showPassword ? "text" : "password"}
                       placeholder="Enter your password"
                       autoComplete="current-password"
                       disabled={isPending}
                       aria-invalid={!!fieldState.error}
-                      aria-describedby={fieldState.error ? "password-error" : undefined}
+                      aria-describedby={
+                        fieldState.error ? "password-error" : undefined
+                      }
                     />
+
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                      tabIndex={-1}
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
                   </FieldGroup>
+
                   {fieldState.error && (
                     <FieldError id="password-error">
                       {fieldState.error.message}

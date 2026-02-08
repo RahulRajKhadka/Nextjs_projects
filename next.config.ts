@@ -7,11 +7,19 @@ const nextConfig: NextConfig = {
 
     remotePatterns:[
       {
-        hostname:"media.istockphoto.com",
+        hostname:"static.vecteezy.com",
+
+        protocol:"https",
+        port:"",
+  },
+{
+
+  hostname:"decisive-blackbird-123.convex.cloud",
 
         protocol:"https",
         port:"",
   }
+
 ]
 
 }
