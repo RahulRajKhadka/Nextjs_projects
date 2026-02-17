@@ -5,6 +5,8 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { Id } from "@/convex/_generated/dataModel";
+import { Separator } from "@/components/ui/separator";
+import { CommentSection } from "@/components/web/CommentSection";
 
 interface PostIdRouteProps {
   params: Promise<{
@@ -22,6 +24,7 @@ export default async function PostIdRoute({ params }: PostIdRouteProps) {
   const postId = postIdString as Id<"posts">;
 
   const post = await fetchAuthQuery(api.posts.getPostById, { postId });
+ 
 
   if (!post) {
     return (
@@ -75,10 +78,18 @@ export default async function PostIdRoute({ params }: PostIdRouteProps) {
         )}
 
        
-        <div className="mt-8 whitespace-pre-wrap leading-relaxed">
+       
+      </article>
+
+
+      <Separator className="my-8"/>
+    <div className="mt-8 whitespace-pre-wrap leading-relaxed">
           {post.body}
         </div>
-      </article>
+
+
+      <Separator className="my-8"/>
+      <CommentSection />
     </div>
   );
 }
