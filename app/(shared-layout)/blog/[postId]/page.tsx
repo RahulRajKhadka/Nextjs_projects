@@ -1,6 +1,6 @@
 import { buttonVariants } from "@/components/ui/button";
 import { api } from "@/convex/_generated/api";
-import { fetchAuthQuery } from "@/lib/auth-server";
+import { fetchAuthQuery, preloadAuthQuery } from "@/lib/auth-server";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -24,7 +24,10 @@ export default async function PostIdRoute({ params }: PostIdRouteProps) {
   const postId = postIdString as Id<"posts">;
 
   const post = await fetchAuthQuery(api.posts.getPostById, { postId });
- 
+
+  const preloadedComments=await preloadAuthQuery(api.comment.getCommentsByPostId,
+    { postId:postId,}
+  );
 
   if (!post) {
     return (
@@ -89,7 +92,7 @@ export default async function PostIdRoute({ params }: PostIdRouteProps) {
 
 
       <Separator className="my-8"/>
-      <CommentSection />
+      <CommentSection preloadedComments={preloadedComments} />
     </div>
   );
 }
